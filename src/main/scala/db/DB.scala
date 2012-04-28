@@ -2,7 +2,9 @@ package db
 
 
 import javax.sql.DataSource
-import java.sql.{Statement, Savepoint, Connection}
+import com.typesafe.config.Config
+import java.sql._
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -39,12 +41,83 @@ trait DBApi {
   }
 
   def withConnection[A](name:String)(block:Connection => A):A = {
+      val connection = new AutoCleanConnection(getConnection(name))
+    try{
+      block(connection)
+    } finally {
+      connection.close()
+    }
+  }
 
+  /**
+   * 执行一串code，在jdbc transaction下，
+   * connection和所有的statements 自动释放
+   * @param name
+   * @param block
+   * @tparam A
+   * @return
+   */
+  def withTransaction[A](name:String)(block:Connection =>A):A = {
+    withConnection(name) { connection =>
+      try{
+        connection.setAutoCommit(false)
+        val r = block(connection)
+        connection.commit()
+        r
+      } catch {
+        case e => connection.rollback();throw  e
+      }
+    }
   }
 }
 
-class DB {
+/**
+ * 提供高级别的常用API 获得JDBC connection
+ * 例如
+ * {{{
+ *   val conn = DB.getConnection("customers")
+ * }}}
+ */
+object DB {
 
+  private def error = throw new Exception("DB错误")
+
+
+
+}
+import api.Configuration._
+private[db] class BoneCPApi(configuration:Config,classloader:ClassLoader) extends DBApi {
+
+//  private def error(db:String,message:String = "") = throw configuration
+
+  private val dbNames = configuration.subKeys
+
+  private def register(driver:String,c:Config) {
+    try{
+      DriverManager.registerDriver(Class.forName(driver,true,classloader).newInstance().asInstanceOf[Driver])
+    } catch {
+      case e =>
+    }
+  }
+
+  private def createDataS
+
+
+  val datasources: List[(DataSource, String)] = _
+
+  /**
+   * 关闭某一datasource
+   * @param ds
+   */
+  def shutdownPool(ds: DataSource) {}
+
+  /**
+   * 获得一个jdbc连接，auto-commit 设置为true
+   * 不要忘了释放connection，通过调用close
+   * @param name
+   * @return
+   */
+  def getDataSource(name: String): DataSource = null
 }
 
 /**
