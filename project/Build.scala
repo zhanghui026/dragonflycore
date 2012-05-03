@@ -23,6 +23,7 @@ object ProjectBuild extends Build {
         "play.config" %% "config" % "0.3.0",
         "com.typesafe.akka" % "akka-actor" % "2.0.1",
         "com.typesafe.akka" % "akka-slf4j" % "2.0.1",
+        "com.github.scala-incubator.io" %%  "scala-io-file" % "0.2.0",
         ("com.jolbox"                       %    "bonecp"                   %   "0.7.1.RELEASE" notTransitive())
           .exclude("com.google.guava", "guava")
           .exclude("org.slf4j", "slf4j-api")
